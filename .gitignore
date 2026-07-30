@@ -1,0 +1,7 @@
+WifiConfigStore.xml
+
+__pycache__/
+*.pyc
+
+.venv
+venv

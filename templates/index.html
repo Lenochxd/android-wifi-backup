@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android WiFi Backup</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/script.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        {% block content %}
+            <h1>Upload WiFi Config</h1>
+            <form method="post" enctype="multipart/form-data" class="mb-4">
+                <div class="mb-3">
+                    <label for="wifi_config_file" class="form-label">WifiConfigStore.xml</label>
+                    <input class="form-control" type="file" id="wifi_config_file" name="wifi_config_file" accept=".xml,application/xml,text/xml" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+
+            {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            {% if networks %}
+                <h2>Saved WiFi Networks</h2>
+                <p class="text-muted">
+                    {% if networks|length == 1 %}
+                        1 saved WiFi network found.
+                    {% else %}
+                        {{ networks|length }} saved WiFi networks found.
+                    {% endif %}
+                </p>
+                <input type="checkbox" id="show_passwordless" name="show_passwordless" value="1" onclick="togglePasswordless()" checked="true">
+                <label for="show_passwordless">Show passwordless networks</label><br>
+                <button class="btn btn-primary mb-3" onclick="selectAll()">Select All</button>
+                <button class="btn btn-secondary mb-3" onclick="deselectAll()">Deselect All</button>
+                <br>
+                <button class="btn btn-secondary mb-3" onclick="generateQRCodes()">Generate QR Codes</button>
+                <ul class="list-group">
+                    {% for network in networks %}
+                        <li class="list-group-item {% if network.is_passwordless %}passwordless{% endif %}">
+                            <input
+                                type="checkbox"
+                                class="network-checkbox"
+                                name="network"
+                                data-ssid="{{ network.ssid.strip('\"').replace('\"', '&quot;') }}"
+                                data-password="{{ network.password.strip('\"').replace('\"', '&quot;') }}"
+                                data-authentication-type="{{ network.authentication_type }}"
+                            >
+                            {% for attribute in network.WifiConfiguration.string %}
+                                {% if attribute["@name"] == "SSID" %}
+                                    <strong class="ssid">{{ attribute['#text'] }}</strong>
+                                {% endif %}
+                                {% if attribute["@name"] == "PreSharedKey" %}
+                                    <p class="password">{{ attribute['#text'] }}</p>
+                                {% endif %}
+                                {% if attribute["@name"] == "ConfigKey" %}
+                                    <p class="authentication text-muted">({{ attribute['#text'].split('"')[-1].replace("NONE", "nopass") }})</p>
+                                {% endif %}
+                            {% endfor %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% elif not error %}
+                <p>Upload a WifiConfigStore.xml file to display saved networks.</p>
+            {% endif %}
+        {% endblock %}
+    </div>
+</body>
+</html>
